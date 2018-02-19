@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" name="viewport" content="width=device-width; initial-scale=1.0;">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='scouting.css') }}">
+	<title>Seaquam Vex Robotics Scouting</title>
+</head>
+<body>
+  <header><h1>Submit Report</h1></header>
+  <form class="wrapper" method="post">
+    <div class="box">
+      Robot/Team Name: <input type="text" name="team">
+    </div>
+    <div class="box">
+      Optional Notes: <input type="text" name="notes">
+    </div>
+    <div class="box2">Autonomous</div>
+    <div class="box">
+      Total cones stacked: <input type="number" name="auton_cones_stacked" min=0 max=5 value=0>
+    </div>
+    <div class="box">
+      Mobile goal placement:<br>
+      <input type="radio" name="auton_mobile_goal" value="far"> Far Zone<br>
+      <input type="radio" name="auton_mobile_goal" value="mid"> Mid Zone<br>
+      <input type="radio" name="auton_mobile_goal" value="near"> Near Zone<br>
+      <input type="radio" name="auton_mobile_goal" value="none" checked> None<br>
+    </div>
+    <div class="box2">Driver Control</div>
+    <div class="box">
+      Highest stack: <input type="number" name="driver_highest_stack" min=0 max=15 value=0>
+    </div>
+    <div class="box">
+      Far zone mobile goal? <input type="checkbox" name="driver_is_mobile_far" value="yes"><br><br>
+      Far zone cones stacked: <input type="number" name="driver_num_cones_far" min=0 max=15 value=0>
+    </div>
+    <div class="box">
+      Mid zone mobile goals: <input type="number" name="driver_num_mobile_mid" min=0 max=4 value=0><br><br>
+      Mid zone cones stacked: <input type="number" name="driver_num_cones_mid" min=0 max=25 value=0><br><br>
+    </div>
+    <div class="box">
+      Near zone mobile goals: <input type="number" name="driver_num_mobile_near" min=0 max=4 value=0><br><br>
+      Near zone cones stacked: <input type="number" name="driver_num_cones_near" min=0 max=25 value=0><br><br>
+    </div>
+    <div class="box">
+      Tower cones stacked: <input type="number" name="driver_num_cones_tower" min=0 max=7 value=0><br><br>
+    </div>
+    <div class="box">
+      <input type="submit" value="Submit Report">
+    </div>
+  </form>
+</body>
+</html>
