@@ -1,6 +1,23 @@
+from flask import Flask, Markup, render_template, request
 import pymysql
 import time
-from flask import Flask, Markup, render_template, request
+import os
+
+
+event = "lastchance"
+
+clean = str.maketrans('', '', """ ^$#@~`&;:|{()}[]<>+=!?.,\/*-_"'""")
+sanitize = str.maketrans('', '', """^$#@~`;:|{()}[]+=\*_"'""")
+
+#Configuration
+db_user = os.environ['DB_USER']
+db_password = os.environ['DB_PASSWORD']
+db_name = os.environ['DB_NAME']
+db_ip = os.environ['DB_IP']
+
+# Open database connection
+db = pymysql.connect(db_ip, db_user, db_password, db_name)
+c = db.cursor()
 
 
 def report(team_name, auton_score, driver_score, scouter_id, highest_stack, notes=''):
@@ -173,14 +190,6 @@ def page_not_found(e):
 	return render_template('404.html'), 404
 
 if __name__ == '__main__':
-	clean = str.maketrans('', '', """ ^$#@~`&;:|{()}[]<>+=!?.,\/*-_"'""")
-	sanitize = str.maketrans('', '', """^$#@~`;:|{()}[]+=\*_"'""")
-
-	# Open database connection
-	db = pymysql.connect("localhost","root","geheim","vex_robotics_scouting")
-	c = db.cursor()
-
-	event = "lastchance"
 	c.execute('CREATE TABLE IF NOT EXISTS '+event+'(team_name TEXT, auton_score INT, driver_score INT, highest_stack INT, notes TEXT, date_time BIGINT, scouter_id BIGINT)')
 	#TODO Swap out hard-coding for scraped data stored in a database https://www.robotevents.com/robot-competitions/vex-robotics-competition/RE-VRC-17-2911.html 
 	valid_teams = ['2A','2C','2E','2G','2H','2N','2X','2Y',
