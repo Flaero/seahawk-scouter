@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" name="viewport" content="width=device-width; initial-scale=1.0;">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles.css') }}">
+	<title>Past Tournaments</title>
+</head>
+<body>
+	<header><h1 class="lightblue">Past Tournament Data</h1></header>
+	<nav>
+		<div class="wrapper">
+			{{ tournaments }}
+		</div>
+	</nav>
+</body>
+</html>
