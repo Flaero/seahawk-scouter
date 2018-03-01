@@ -2,19 +2,19 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8" name="viewport" content="width=device-width; initial-scale=1.0;">
-	<link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='scouting.css') }}">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles.css') }}">
 	<title>Seaquam Vex Robotics Scouting</title>
 </head>
 <body>
   <header><h1>Submit Report</h1></header>
-  <form class="wrapper" method="post">
+  <form class="formwrapper" method="post">
     <div class="box">
       Robot/Team Name: <input type="text" name="team">
     </div>
     <div class="box">
       Optional Notes: <input type="text" name="notes">
     </div>
-    <div class="box2">Autonomous</div>
+    <div class="titlebox">Autonomous</div>
     <div class="box">
       Total cones stacked: <input type="number" name="auton_cones_stacked" min=0 max=5 value=0>
     </div>
@@ -25,7 +25,7 @@
       <input type="radio" name="auton_mobile_goal" value="near"> Near Zone<br>
       <input type="radio" name="auton_mobile_goal" value="none" checked> None<br>
     </div>
-    <div class="box2">Driver Control</div>
+    <div class="titlebox">Driver Control</div>
     <div class="box">
       Highest stack: <input type="number" name="driver_highest_stack" min=0 max=15 value=0>
     </div>
