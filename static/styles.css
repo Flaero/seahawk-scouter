@@ -83,6 +83,7 @@ span { color: #0c6; }
 .box2:hover { background-color: #d07; }
 
 .titlebox { text-align: left;
+            font-weight: bold;
             padding: 10px;
             background-color: #907dac; }
 
