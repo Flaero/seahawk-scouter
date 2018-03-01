@@ -1,0 +1,143 @@
+/* The merge */
+
+html { background: #0f3e4f; }
+
+body { background-repeat: no-repeat;
+       background-position: 50% 10%;
+       background-size: cover;
+       background-color: #0f3e4f;
+       /*background-image: url("fresh_hamade.jpg");*/
+       background-repeat: repeat-y; }
+
+input { background-color: #fff;
+        color: #000; }
+
+footer { font-style: italic; }
+
+h3 { font-size: 18px;
+     color:#40bddc; }
+
+span { color: #0c6; }
+
+table { font-family: arial, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+        padding-left: 0px; }
+
+tr:nth-child(odd) { background-color: #0a1e2f; }
+
+td, th { color: #fff;
+         border: 1px solid #fff;
+         text-align: left;
+         padding: 5px; }
+
+ul { list-style-type: none;
+     padding-left: 0px; }
+
+li { color: #fff;
+     font-size: 17px; }
+
+.error { color: #F00; }
+
+.unscouted { color: #000;
+             text-align: center; }
+
+
+/* 404.css */
+h1 { color: #fff;
+     text-align: center; }
+
+/* agenda.css */
+h1 {
+    color: #fff;
+    text-align: center; 
+}
+
+h2 {
+    font-size: 20px;
+    text-align: center;
+    color: #bbb;
+}
+
+/* data.css */
+h1 {
+    color: #fff;
+    text-align: center; 
+}
+
+h2 {
+    font-size: 20px;
+    text-align: center;
+}
+
+/* index.css */
+h1 {
+    color: #107dac;
+    text-align: center; 
+}
+
+.wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 50px;
+    grid-gap: 10px;
+    background-color: #0f3e4f;
+    color: #444;
+    letter-spacing: 1px;
+    justify-content: center;
+    align-items: center;
+}
+
+.box1 {
+    text-align: center;
+    grid-column: 1/ span 2;
+    background-color: #005073;
+    color: #ccc;
+    border-radius: 2px;
+    padding: 10px;
+    text-decoration: none;
+}
+
+.box2 {
+    padding-bottom: 4px;
+    text-align: center;
+    background-color: #107dac;
+    color: #fff;
+    border-radius: 5px;
+    padding: 10px;
+    text-decoration: none;
+    display: block;
+}
+
+.box2:hover {
+    background-color: #d07;
+}
+
+/* scouting.css */
+h1 {
+    color: #fff;
+    text-align: center; 
+}
+
+.wrapper {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-gap: 10px;
+    background-color: #107dac;
+    color: #fff;
+    letter-spacing: 1px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+}
+
+.box {
+    text-align: left;
+    padding: 22px;
+}
+
+.box2 {
+    text-align: left;
+    padding: 10px;
+    background-color: #907dac;
+}
