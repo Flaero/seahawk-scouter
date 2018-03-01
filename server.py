@@ -216,7 +216,7 @@ if __name__ == '__main__':
                    #,'TEST'
                    ] #Remove 'TEST' from list during real use
 
-	app.run(threaded=True, debug=True, host='0.0.0.0', port=80)
+	app.run(threaded=True, debug=True, host='0.0.0.0', port=8000)
 
 db.close()
 print('done')
