@@ -1,15 +1,12 @@
 from flask import Flask, Markup, render_template, request
+from bs4 import BeautifulSoup
+import requests
 import pymysql
 import time
 import os
 
-
+# Configuration
 current_tournament_id = 2912
-
-clean = str.maketrans('', '', """ ^$#@~`&;:|{()}[]<>+=!?.,\/*-_"'""")
-sanitize = str.maketrans('', '', """^~`;:|{()}[]+=\*_"'""")
-
-#Configuration
 db_user = os.environ['DB_USER']
 db_password = os.environ['DB_PASSWORD']
 db_name = os.environ['DB_NAME']
@@ -18,6 +15,9 @@ db_ip = os.environ['DB_IP']
 # Open database connection
 db = pymysql.connect(db_ip, db_user, db_password, db_name)
 c = db.cursor()
+
+clean = str.maketrans('', '', """ ^$#@~`&;:|{()}[]<>+=!?.,\/*-_"'""")
+sanitize = str.maketrans('', '', """^~`;:|{()}[]+=\*_"'""")
 
 
 def report(team_name, auton_score, driver_score, highest_stack, reporter_ip, notes=""):
@@ -100,14 +100,16 @@ def index():
 
 @app.route('/scouting', methods=['POST', 'GET']) # Scouting submission page
 def scouting():
-	error = None
+	c.execute('SELECT tournament_name FROM Tournaments WHERE tournament_id=' + str(current_tournament_id))
+	tournament_name = c.fetchall()[0][0]
+	
 	if request.method == 'POST':
 		auton_score = 0
 		score = 0
 		team_name = request.form['team'].translate(clean).upper()
 		if team_name in valid_teams:
 			print("Report submitted for " + team_name)
-			#Autonomous
+			# Autonomous points
 			if request.form['auton_mobile_goal'] == "far":
 				auton_score = 20
 			elif request.form['auton_mobile_goal'] == "mid":
@@ -117,9 +119,9 @@ def scouting():
 			auton_score += int(request.form['auton_cones_stacked']) * 2
 			
 			if int(request.form['driver_num_mobile_mid']) + int(request.form['driver_num_mobile_near']) + (request.form.get('driver_is_mobile_far') == "yes") > 4:
-				return render_template('index.html', status=Markup('<span class="error">Error:</span> Too many mobile goals submitted. Only 4 exist.'))
+				return render_template('index.html', current_tournament_name=tournament_name, current_tournament_id=current_tournament_id, status=Markup('<span class="error">Error:</span> Too many mobile goals submitted. Only 4 exist.'))
 
-			#Driver/Total
+			# Driver/End-game points
 			if request.form.get('driver_is_mobile_far') == "yes":
 				score += 20 + int(request.form['driver_num_cones_far']) * 2
 			score += int(request.form['driver_num_mobile_mid']) * 10 + int(request.form['driver_num_cones_mid']) * 2
@@ -129,16 +131,14 @@ def scouting():
 			highest_stack = request.form['driver_highest_stack']
 			reporter_ip = request.environ['REMOTE_ADDR'].translate(clean)
 
-			#team_name, auton_score, driver_score, highest_stack, reporter_ip, notes=""
-
 			report(team_name, auton_score, score, highest_stack, reporter_ip, request.form['notes'].translate(sanitize))
 		else:
 			if len(team_name) == 0:
 				team_name = "NULL"
-			return render_template('index.html', status=Markup('<span class="error">Error:</span> Invalid team name: ' + team_name + " not found in list of participating robots."))
-		return render_template('index.html', status="Scouting report sent successfully")
+			return render_template('index.html', current_tournament_name=tournament_name, current_tournament_id=current_tournament_id, status=Markup('<span class="error">Error:</span> Invalid team name: ' + team_name + " not found in list of participating robots."))
+		return render_template('index.html', current_tournament_name=tournament_name, current_tournament_id=current_tournament_id, status="Scouting report sent successfully")
 	elif request.method == 'GET':
-		return render_template('scouting.html', error=error)
+		return render_template('scouting.html')
 
 @app.route('/data/<int:tournament_id>') # Compiled scouting reports page
 def data(tournament_id):
@@ -177,7 +177,7 @@ def past_tournaments():
 def agenda():
 	return render_template('agenda.html')
 
-@app.errorhandler(404) #Error 404 page
+@app.errorhandler(404) # Error 404 page
 def page_not_found(e):
 	return render_template('404.html'), 404
 
@@ -188,9 +188,34 @@ if __name__ == '__main__':
 	tbls = str(c.fetchall())
 	if 'Tournaments' not in tbls:
 		c.execute('CREATE TABLE IF NOT EXISTS Tournaments(tournament_id INT, tournament_name TEXT, team_list TEXT, PRIMARY KEY (tournament_id))')
+		db.commit()
 	if 'Reports' not in tbls:
 		c.execute('CREATE TABLE IF NOT EXISTS Reports(team_name TEXT, auton_score INT, driver_score INT, highest_stack INT, notes TEXT, time_stamp BIGINT, reporter_ip BIGINT, tournament_id INT)')
+		db.commit()
 	
+	# If current tournament does not exist in Tournaments table then add it
+	c.execute('SELECT * FROM Tournaments WHERE tournament_id=' + str(current_tournament_id))
+	if len(c.fetchall()) == 0:
+
+		# Scrape tournament data from vexdb.io
+		# If the website layout changes I may need to rewrite the parsing
+		r = requests.get('https://vexdb.io/events/view/RE-VRC-17-' + str(current_tournament_id))
+		parsed_html = BeautifulSoup(r.text, 'lxml')
+
+		# Get competing teams
+		teams = ''
+		for x in parsed_html.find_all('td', attrs={'class': 'number'}):
+			teams += x.get_text() + ' '
+		teams = teams[:-1] # Remove the extra space off the end
+
+		# Get tournament name
+		tournament_name = parsed_html.find('h2').get_text()
+
+		# Make new tournament entry
+		c.execute('INSERT INTO Tournaments(tournament_id, tournament_name, team_list)' +
+                  'VALUES ('+str(current_tournament_id)+',"'+tournament_name+'","'+teams+'")')
+		db.commit()
+
 	c.execute('SELECT team_list FROM Tournaments WHERE tournament_id=' + str(current_tournament_id))
 	valid_teams = c.fetchall()
 	valid_teams = valid_teams[0][0].split()
