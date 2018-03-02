@@ -33,14 +33,16 @@ def pull_reports(tournament_id, team_name=None):
         c.execute('SELECT * FROM Reports WHERE tournament_id=' + str(tournament_id))
     return c.fetchall()
 
-def get_unscouted_robots(tournament_id): # Returns a list of unscouted robots in string name form
+def get_unscouted_robots(tournament_id): # Returns a list of unscouted robots
 	scouted = []
 	unscouted = []
+	c.execute('SELECT team_list FROM Tournaments WHERE tournament_id=' + str(tournament_id))
+	teams = c.fetchall()[0][0].split()
 	for r in pull_reports(tournament_id):
-		for t in valid_teams:
+		for t in teams:
 			if t == r[0] and t not in scouted:
 				scouted.append(t)
-	for r in valid_teams:
+	for r in teams:
 		if r not in scouted:
 			unscouted.append(r)
 	return unscouted
