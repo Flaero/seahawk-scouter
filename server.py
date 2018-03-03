@@ -1,5 +1,6 @@
 from flask import Flask, Markup, render_template, request
 from bs4 import BeautifulSoup
+from datetime import datetime
 import requests
 import pymysql
 import time
@@ -20,15 +21,15 @@ clean = str.maketrans('', '', """ ^$#@~`&;:|{()}[]<>+=!?.,\/*-_"'""")
 sanitize = str.maketrans('', '', """^~`;:|{()}[]+=\*_"'""")
 
 
-def report(team_name, auton_score, driver_score, highest_stack, reporter_ip, notes=""):
+def report(team_name, color, side, auton_score, driver_score, highest_stack, reporter_ip, notes=""):
     time_stamp = int(time.time())
-    c.execute('INSERT INTO Reports(team_name, auton_score, driver_score, highest_stack, notes, time_stamp, reporter_ip, tournament_id)' +
-              'VALUES ("'+team_name+'",'+str(auton_score)+','+str(driver_score)+','+str(highest_stack)+',"'+notes+'",'+str(time_stamp)+','+str(reporter_ip)+','+str(current_tournament_id)+")")
+    c.execute('INSERT INTO Reports(team_name, color, side, auton_score, driver_score, highest_stack, notes, time_stamp, reporter_ip, tournament_id)' +
+              'VALUES ("'+team_name+'","'+color+'","'+side+'",'+str(auton_score)+','+str(driver_score)+','+str(highest_stack)+',"'+notes+'",'+str(time_stamp)+','+str(reporter_ip)+','+str(current_tournament_id)+")")
     db.commit()
 
 def pull_reports(tournament_id, team_name=None):
     if team_name:
-        c.execute('SELECT * FROM Reports WHERE team_name="' + team_name + '" and tournament_id=' + str(tournament_id))
+        c.execute('SELECT * FROM Reports WHERE team_name="' + team_name + '" AND tournament_id=' + str(tournament_id))
     else:
         c.execute('SELECT * FROM Reports WHERE tournament_id=' + str(tournament_id))
     return c.fetchall()
@@ -102,10 +103,12 @@ def index():
 
 @app.route('/scouting', methods=['POST', 'GET']) # Scouting submission page
 def scouting():
-	c.execute('SELECT tournament_name FROM Tournaments WHERE tournament_id=' + str(current_tournament_id))
-	tournament_name = c.fetchall()[0][0]
-	
+	#TODO: Store diffent autonomous positions
 	if request.method == 'POST':
+		c.execute('SELECT tournament_name, team_list FROM Tournaments WHERE tournament_id=' + str(current_tournament_id))
+		query = c.fetchall()
+		tournament_name = query[0][0]
+		valid_teams = query[0][1].split()
 		auton_score = 0
 		score = 0
 		team_name = request.form['team'].translate(clean).upper()
@@ -131,9 +134,11 @@ def scouting():
 			score += int(request.form['driver_num_cones_tower']) * 2
 
 			highest_stack = request.form['driver_highest_stack']
+			color = request.form.get('color', '') #TODO: only allow 'red' and 'blue'
+			side = request.form.get('side', '') #TODO: only allow 'left' and 'right'
 			reporter_ip = request.environ['REMOTE_ADDR'].translate(clean)
 
-			report(team_name, auton_score, score, highest_stack, reporter_ip, request.form['notes'].translate(sanitize))
+			report(team_name, color, side, auton_score, score, highest_stack, reporter_ip, request.form['notes'].translate(sanitize))
 		else:
 			if len(team_name) == 0:
 				team_name = "NULL"
@@ -147,10 +152,13 @@ def data(tournament_id):
 	c.execute('SELECT tournament_name FROM Tournaments WHERE tournament_id=' + str(tournament_id))
 	tournament_name = c.fetchall()[0][0]
 	robots_data = ''
-	for i, row in enumerate(reverse_bubble_sort(compress_reports(tournament_id))):
+	for i, row in enumerate(reverse_bubble_sort(compress_reports(tournament_id))): 
 		robots_data += '<tr><td>'+str(i+1)+'</td>'
-		for cell in row:
-			robots_data += '<td>'+str(cell)+'</td>'
+		for i, cell in enumerate(row):
+			if i == 0:
+				robots_data += '<td><a href="../autonomous/'+str(cell)+'">'+str(cell)+'</a></td>'
+			else:
+				robots_data += '<td>'+str(cell)+'</td>'
 		robots_data +='</tr>'
 	robots_data_html = Markup(robots_data)
 
@@ -166,14 +174,46 @@ def data(tournament_id):
 
 	return render_template('data.html', tournament_name=tournament_name, data=robots_data_html, unscouted=unscouted_html)
 
-@app.route('/past-tournaments')
-def past_tournaments():
+@app.route('/tournaments')
+def tournaments():
 	tournaments_html = ''
 	c.execute('SELECT tournament_id, tournament_name, team_list FROM Tournaments')
 	for t in c.fetchall():
-		tournaments_html += '<a class="box2" href="data/' + str(t[0]) + '">' + t[1] + '</a>'
+		tournaments_html += '<a class="box2 bluebg" href="data/' + str(t[0]) + '">' + t[1] + '</a>'
 	tournaments_html = Markup(tournaments_html)
 	return render_template('past_tournaments.html', tournaments=tournaments_html)
+
+@app.route('/autonomous/<string:team_name>') # Show all autonomous attempt details for a specified team
+def autonomous(team_name):
+	autonomous_reports = ''
+	c.execute('SELECT auton_score, color, side, time_stamp FROM Reports WHERE team_name="' + team_name + '" AND tournament_id=' + str(current_tournament_id))
+	for row in c.fetchall():
+		classes = ''
+		if row[1] == 'red': classes = 'redteam '
+		elif row[1] == 'blue': classes = 'blueteam '
+		else: classes = 'noteam '
+
+		side = ''
+		if row[2] == 'right': 
+			side = 'RIGHT'
+		elif row[2] == 'left': 
+			side = 'LEFT'
+		else: 
+			side = '?????'
+
+		autonomous_reports += '<div class="'+classes+'box2"><span class="left">' + datetime.fromtimestamp(row[3]).strftime('%I:%M %p') + '</span>' + str(row[0]) + ' Points <span class="right">' + side + ' TILE</span></div>'
+	autonomous_reports = Markup(autonomous_reports)
+	return render_template('autonomous.html', team_name=team_name.upper(), autonomous_reports=autonomous_reports)
+
+#@app.route('/delete') # Page for deleting incorrect scouting reports
+#ef delete():
+#	reporter_ip = request.environ['REMOTE_ADDR'].translate(clean)
+#	reports_html = ''
+#	c.execute('SELECT team_name, auton_score, driver_score, highest_stack, notes, time_stamp FROM Reports WHERE reporter_ip=' + str(reporter_ip))
+#	for row in c.fetchall():
+#		reports_html += '<div class="box2 bluebg">' + str(row[0]) + '</div>'
+#
+#	return render_template('delete.html', reports=reports_html)
 
 @app.route('/agenda')
 def agenda():
@@ -192,7 +232,7 @@ if __name__ == '__main__':
 		c.execute('CREATE TABLE IF NOT EXISTS Tournaments(tournament_id INT, tournament_name TEXT, team_list TEXT, PRIMARY KEY (tournament_id))')
 		db.commit()
 	if 'Reports' not in tbls:
-		c.execute('CREATE TABLE IF NOT EXISTS Reports(team_name TEXT, auton_score INT, driver_score INT, highest_stack INT, notes TEXT, time_stamp BIGINT, reporter_ip BIGINT, tournament_id INT)')
+		c.execute('CREATE TABLE IF NOT EXISTS Reports(team_name TEXT, color TEXT, side TEXT, auton_score INT, driver_score INT, highest_stack INT, notes TEXT, time_stamp BIGINT, reporter_ip BIGINT, tournament_id INT)')
 		db.commit()
 	
 	# If current tournament does not exist in Tournaments table then add it
@@ -217,10 +257,6 @@ if __name__ == '__main__':
 		c.execute('INSERT INTO Tournaments(tournament_id, tournament_name, team_list)' +
                   'VALUES ('+str(current_tournament_id)+',"'+tournament_name+'","'+teams+'")')
 		db.commit()
-
-	c.execute('SELECT team_list FROM Tournaments WHERE tournament_id=' + str(current_tournament_id))
-	valid_teams = c.fetchall()
-	valid_teams = valid_teams[0][0].split()
 
 	app.run(threaded=True, debug=True, host='0.0.0.0', port=8000)
 
