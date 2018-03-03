@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" name="viewport" content="width=device-width; initial-scale=1.0;">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles.css') }}">
+	<title>Seaquam Vex Robotics Scouting</title>
+</head>
+<body>
+	<header><h1 class="lightblue">{{ team_name }} Autonomous</h1></header>
+	<nav>
+		<div class="listwrapper">
+			{{ autonomous_reports }}
+		</div>
+	</nav>
+</body>
+</html>
